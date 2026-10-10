@@ -841,7 +841,7 @@ const IC={s:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m2
 const fd=d=>new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
 const rt=p=>Math.max(1,Math.round(((p.body||'').split(/\s+/).length)/180));
 const grad=t=>{let h=0;for(const c of String(t))h=(h*31+c.charCodeAt(0))%360;return `linear-gradient(135deg,hsl(${h},70%,34%),hsl(${(h+55)%360},75%,12%))`};
-const cov=p=>p.cover?`<img loading="lazy" src="${p.cover}" alt="">`:`<div class="ph" style="background:${grad(p.title)}"><img class="wmk" src="${LOGO}" alt=""></div>`;
+const cov=p=>p.cover?`<img loading="lazy" src="${p.cover}" alt="">`:`<div class="ph" style="background:${grad(p.title)}"></div>`;
 function md(t,im){im=im||[];const inl=s=>E(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
  let h='',ul=false;(t||'').split('\n').forEach(l=>{l=l.trimEnd();
   const mi=l.match(/^!\[(\d+)\]\s*(.*)$/);if(mi){if(ul){h+='</ul>';ul=false}const sr=im[mi[1]-1];if(sr)h+=`<figure class="fg"><img src="${sr}" alt="">${mi[2]?`<figcaption>${inl(mi[2])}</figcaption>`:''}</figure>`;return}
