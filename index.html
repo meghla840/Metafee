@@ -823,6 +823,8 @@ const $=(s,r=document)=>r.querySelector(s);
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
 let P=[],PC='',SFN='';try{const d0=JSON.parse($('#data').textContent);P=d0.posts||[];PC=d0.pc||'';SFN=d0.font||''}catch(e){}
+const EXT=!window.claude&&(/\.github\.io$/.test(location.hostname)||location.protocol==='file:'||ls('mf_ext')==='1');
+const gh=()=>{let o={};try{o=JSON.parse(ls('mf_gh')||'{}')}catch(e){}return{owner:o.owner||location.hostname.split('.')[0],repo:o.repo||(location.pathname.split('/')[1]||''),branch:o.branch||'main',path:o.path||'posts.json',token:o.token||''}};
 const FONTS=['Anek Bangla','Hind Siliguri','Noto Sans Bengali','Noto Serif Bengali','Baloo Da 2','Tiro Bangla','Mina','Atma','Galada'];
 const fam=f=>`'${f}',${/Serif|Tiro/.test(f)?'serif':'sans-serif'}`;
 const fvars=f=>f?`--ff:${fam(f)};--fh:${fam(f)}`:'';
@@ -879,7 +881,7 @@ function nf(){return '<div class="wrap emp"><div class="serif" style="font-size:
 function admin(){if(!CHK)return '<div class="wrap emp">Checking access…</div>';if(!OWN)return nf();
  if(!PC)return `<div class="wrap pg"><div class="pn" style="max-width:420px;margin:30px auto"><h2 class="serif">Create admin passcode</h2><small>Choose a passcode you will remember (6+ characters).</small><input id="p1" type="password" placeholder="New passcode" autocomplete="new-password"><input id="p2" type="password" placeholder="Confirm passcode" autocomplete="new-password"><button class="btn" data-act="setpc">${BUSY?'Saving…':'Save passcode'}</button></div></div>`;
  if(!UNL)return `<div class="wrap pg"><div class="pn" style="max-width:420px;margin:30px auto"><h2 class="serif">Admin access</h2><input id="p1" type="password" placeholder="Passcode" autocomplete="current-password"><button class="btn" data-act="unlock">Unlock</button></div></div>`;
- if(!ED)return `<div class="wrap pg"><div class="pn"><h2 class="serif">Dashboard</h2><small>Storage used: ${(new Blob([buildDoc()]).size/1048576).toFixed(1)} MB of 16 MB</small><div class="tabs"><button class="nv${AT==='posts'?' on':''}" data-act="atab" data-t="posts">Posts</button><button class="nv${AT==='studio'?' on':''}" data-act="atab" data-t="studio">Frame Forge</button><button class="nv${AT==='sec'?' on':''}" data-act="atab" data-t="sec">Settings</button></div>${AT==='posts'?'<button class="btn" data-act="new">+ New post</button>':''}</div>${AT==='studio'?'<div class="stu" style="margin:0"><iframe id="ff" title="Frame Forge" style="height:calc(100vh - 270px)"></iframe></div>':AT==='sec'?SEC():`<div class="pn">${P.length?P.map(p=>`<div class="li"><b>${E(p.title)}<br><small>${E(p.type)} · ${E(p.cat)} · ${fd(p.date)}${(p.trend||p.feat)?' · Trending':''}</small></b><button class="sm" data-act="edit" data-id="${p.id}">Edit</button><button class="sm d" data-act="del" data-id="${p.id}">Delete</button></div>`).join(''):'<small>No posts yet.</small>'}`}</div>`;
+ if(!ED)return `<div class="wrap pg"><div class="pn"><h2 class="serif">Dashboard</h2><small>${EXT?`Data size: ${(new Blob([JSON.stringify({posts:P})]).size/1048576).toFixed(1)} MB`:`Storage used: ${(new Blob([buildDoc()]).size/1048576).toFixed(1)} MB of 16 MB`}</small><div class="tabs"><button class="nv${AT==='posts'?' on':''}" data-act="atab" data-t="posts">Posts</button><button class="nv${AT==='studio'?' on':''}" data-act="atab" data-t="studio">Frame Forge</button><button class="nv${AT==='sec'?' on':''}" data-act="atab" data-t="sec">Settings</button></div>${AT==='posts'?'<button class="btn" data-act="new">+ New post</button>':''}</div>${AT==='studio'?'<div class="stu" style="margin:0"><iframe id="ff" title="Frame Forge" style="height:calc(100vh - 270px)"></iframe></div>':AT==='sec'?SEC():`<div class="pn">${P.length?P.map(p=>`<div class="li"><b>${E(p.title)}<br><small>${E(p.type)} · ${E(p.cat)} · ${fd(p.date)}${(p.trend||p.feat)?' · Trending':''}</small></b><button class="sm" data-act="edit" data-id="${p.id}">Edit</button><button class="sm d" data-act="del" data-id="${p.id}">Delete</button></div>`).join(''):'<small>No posts yet.</small>'}`}</div>`;
  const e=ED;return `<div class="wrap pg"><div class="pn"><h2 class="serif">${e.id?'Edit post':'New post'}</h2>
  <div class="tabs">${[['article','Article'],['video','Video'],['doc','Document']].map(t=>`<button class="nv${e.type===t[0]?' on':''}" data-act="type" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
  <label class="lbl">Title<input id="ft" value="${E(e.title)}"></label>
@@ -893,7 +895,7 @@ function admin(){if(!CHK)return '<div class="wrap emp">Checking access…</div>'
  <label class="lbl">Cover image<input type="file" id="fi" accept="image/*"></label>${e.cover?`<img class="thm" src="${e.cover}" alt=""><button class="sm d" data-act="nocov">Remove cover</button>`:''}
  <label class="lbl" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ff2" style="width:auto" ${e.trend?'checked':''}> Mark as Trending (shows in the animated hero slider on top)</label>
  <div class="row" style="margin:0"><button class="btn" data-act="save">${BUSY?'Publishing…':'Publish'}</button><button class="btn g" data-act="cancel">Cancel</button></div></div></div>`}
-function SEC(){return `<div class="pn"><h2 class="serif" style="font-size:20px">Site font</h2><select id="sf"><option value="">Anek Bangla (default)</option>${fopts(SFN)}</select><p class="fprev" id="fprev" style="font-family:var(--ff)">নমুনা লেখা: বাংলাদেশের সর্বশেষ খবর ও বিশ্লেষণ</p><button class="btn" data-act="savefont">${BUSY?'Saving…':'Save site font'}</button></div><div class="pn"><h2 class="serif" style="font-size:20px">Change passcode</h2><input id="cp" type="password" placeholder="Current passcode"><input id="n1" type="password" placeholder="New passcode"><input id="n2" type="password" placeholder="Confirm new passcode"><button class="btn" data-act="chpc">${BUSY?'Saving…':'Save new passcode'}</button></div><div class="pn"><button class="btn g" data-act="lock">Lock admin now</button></div>`}
+function SEC(){const g=gh();return `${EXT?`<div class="pn"><h2 class="serif" style="font-size:20px">GitHub connection</h2><small>Needed to publish from this site. The token is saved only in this browser.</small><div class="two"><label class="lbl">Owner<input id="g1" value="${E(g.owner)}"></label><label class="lbl">Repository<input id="g2" value="${E(g.repo)}"></label></div><div class="two"><label class="lbl">Branch<input id="g3" value="${E(g.branch)}"></label><label class="lbl">Data file<input id="g4" value="${E(g.path)}"></label></div><label class="lbl">Personal access token<input id="g5" type="password" value="${E(g.token)}" autocomplete="off"></label><button class="btn" data-act="savegh">Save connection</button></div>`:''}<div class="pn"><h2 class="serif" style="font-size:20px">Site font</h2><select id="sf"><option value="">Anek Bangla (default)</option>${fopts(SFN)}</select><p class="fprev" id="fprev" style="font-family:var(--ff)">নমুনা লেখা: বাংলাদেশের সর্বশেষ খবর ও বিশ্লেষণ</p><button class="btn" data-act="savefont">${BUSY?'Saving…':'Save site font'}</button></div><div class="pn"><h2 class="serif" style="font-size:20px">Change passcode</h2><input id="cp" type="password" placeholder="Current passcode"><input id="n1" type="password" placeholder="New passcode"><input id="n2" type="password" placeholder="Confirm new passcode"><button class="btn" data-act="chpc">${BUSY?'Saving…':'Save new passcode'}</button></div><div class="pn"><button class="btn g" data-act="lock">Lock admin now</button></div>`}
 function sync(){if(!ED)return;const g=i=>{const x=$('#'+i);return x?x.value:null};
  ['ft:title','fc:cat','fa:author','fs:summary','fb:body','fu:url','fo:font'].forEach(k=>{const[a,b]=k.split(':'),v=g(a);if(v!==null)ED[b]=v});const f=$('#ff2');if(f)ED.trend=f.checked}
 let HT=null,HI=0;
@@ -921,7 +923,16 @@ function buildDoc(){const c=document.documentElement.cloneNode(true);
  c.querySelector('#app').innerHTML='';c.querySelectorAll('#spl').forEach(n=>n.remove());c.querySelector('#data').textContent=JSON.stringify({posts:P,pc:PC,font:SFN}).replace(/</g,'\\u003c');
  c.querySelector('title').textContent='Metafee';['data-theme','style','class'].forEach(a=>c.removeAttribute(a));const b=c.querySelector('body');['style','class'].forEach(a=>b.removeAttribute(a));
  return '<!DOCTYPE html>\n'+c.outerHTML}
-async function pub(){if(!ART){toast('Publishing is not available in this view');return false}
+async function pubExt(){const g=gh();if(!g.token){toast('Add your GitHub token in Settings first');AT='sec';ED=null;render();return false}
+ BUSY=true;render();
+ try{const api=`https://api.github.com/repos/${g.owner}/${g.repo}/contents/${g.path}`,h={Authorization:'Bearer '+g.token,Accept:'application/vnd.github+json'};
+  let sha;const r=await fetch(api+'?ref='+encodeURIComponent(g.branch),{headers:h});if(r.ok)sha=(await r.json()).sha;else if(r.status!==404)throw new Error('read '+r.status);
+  const body={message:'Update posts',content:btoa(unescape(encodeURIComponent(JSON.stringify({posts:P,pc:PC,font:SFN})))),branch:g.branch};if(sha)body.sha=sha;
+  const w=await fetch(api,{method:'PUT',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!w.ok)throw new Error('write '+w.status);
+  BUSY=false;ED=null;AT='posts';render();toast('Published. It can take about a minute to show for everyone.');return true}
+ catch(e){BUSY=false;render();toast('Publish failed: '+e.message);return false}}
+async function pub(){if(EXT)return pubExt();if(!ART){toast('Publishing is not available in this view');return false}
  BUSY=true;render();try{await ART.publish(buildDoc());return true}catch(e){BUSY=false;render();if(e&&e.code!=='conflict')toast('Publish failed: '+((e&&e.code)||'error'));return false}}
 function resize(file,cb){const i=new Image();i.onload=()=>{const m=1200,s=Math.min(1,m/i.width),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.78))};i.src=URL.createObjectURL(file)}
 let taps=0,tt=0,lpT=null,lpDone=false;
@@ -944,6 +955,7 @@ document.addEventListener('click',async e=>{
   const old=PC;PC=await H(v[0]);UNL=true;ss('mf_u','1');if(!(await pub())){PC=old;UNL=!!old;ss('mf_u',old?'1':'0');render()}}
  else if(a==='unlock'){if(Date.now()<lockUntil){toast('Too many tries. Wait a moment.');return}
   if((await H($('#p1').value))===PC){UNL=true;fails=0;ss('mf_u','1');render()}else{fails++;if(fails>=5){lockUntil=Date.now()+30000;fails=0}toast('Wrong passcode')}}
+ else if(a==='savegh'){ls('mf_gh',JSON.stringify({owner:$('#g1').value.trim(),repo:$('#g2').value.trim(),branch:$('#g3').value.trim()||'main',path:$('#g4').value.trim()||'posts.json',token:$('#g5').value.trim()}));toast('Connection saved')}
  else if(a==='savefont'){SFN=$('#sf').value;applyFont();await pub()}
  else if(a==='lock'){UNL=false;ss('mf_u','0');render()}
  else if(a==='theme'){const x=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=x;ls('mf_t',x)}
@@ -972,9 +984,10 @@ document.addEventListener('change',e=>{if(e.target.id==='sf'||e.target.id==='fo'
 window.addEventListener('scroll',()=>{const p=$('#prog');if(!p)return;const h=document.documentElement;p.style.width=route().p==='a'?(h.scrollTop/(h.scrollHeight-h.clientHeight||1)*100)+'%':'0'},{passive:true});
 window.addEventListener('hashchange',()=>{LM=9;ED=null;AT='posts';window.scrollTo(0,0);render()});
 window.addEventListener('message',async e=>{const f=$('#ff');if(!f||e.source!==f.contentWindow||!e.data||e.data.mf!=='save')return;
- try{const dl=window.claude&&await window.claude.use('downloads');if(dl)await dl.save({filename:e.data.name,data:e.data.blob})}catch(x){}});
+ try{const dl=window.claude&&await window.claude.use('downloads');if(dl)await dl.save({filename:e.data.name,data:e.data.blob});else{const a=document.createElement('a');a.href=URL.createObjectURL(e.data.blob);a.download=e.data.name;document.body.appendChild(a);a.click();a.remove()}}catch(x){}});
 (async()=>{try{if(window.claude){const[u,a]=await Promise.all([claude.use('user'),claude.use('artifact')]);ART=a;OWN=u?await u.isOwner():false}}catch(e){}CHK=true;if(!ED&&!SO)render()})();
 {const s=document.createElement('div');s.id='spl';s.innerHTML=`<div class="sk"><img src="${LOGO}" alt=""></div>`;document.body.appendChild(s);setTimeout(()=>{s.classList.add('h');document.body.classList.add('rdy')},3000);setTimeout(()=>s.remove(),4600)}
 setTimeout(()=>document.body.classList.add('rdy'),4000);
+if(EXT){OWN=true;CHK=true;fetch('posts.json?t='+Date.now()).then(r=>r.ok?r.json():null).then(d=>{if(d){P=d.posts||P;if(d.pc)PC=d.pc;if(d.font!==undefined)SFN=d.font}render()}).catch(()=>{})}
 render();
 </script></body></html>
