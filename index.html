@@ -376,6 +376,7 @@ button.dsg.on{border-color:var(--ac);color:var(--ac)}
 <label>Line under logo: length<input type="range" id="ln1" min="10" max="100" value="55"><\/label>
 <label>Line under text: length<input type="range" id="ln2" min="10" max="100" value="38"><\/label>
 <label>Line thickness<input type="range" id="lnt" min="1" max="8" step="0.5" value="2.5"><\/label>
+<label>Headline line spacing<div style="display:grid;grid-template-columns:46px 1fr 46px;gap:8px;align-items:center"><button class="alt" id="lhm" type="button">−<\/button><input type="range" id="lhs" min="0.9" max="1.8" step="0.05" value="1.15"><button class="alt" id="lhp" type="button">+<\/button><\/div><\/label>
 <\/div>
 
 <div class="panel">
@@ -462,10 +463,10 @@ function headline(top,bot,maxW,fsMax,shadow,hl){const ws=words($('head').value,$
   ws.forEach(o=>{const w=x.measureText(o.w).width;if(cur.length&&cw+sp+w>maxW){lines.push({a:cur,w:cw});cur=[];cw=0}
    cur.push({...o,mw:w});cw+=(cur.length>1?sp:0)+w});
   if(cur.length)lines.push({a:cur,w:cw});
-  const lh=fs*1.3;
+  const lh=fs*1.3,lh2=fs*(+$('lhs').value);
   if(lines.length*lh<=bot-top||fs<=34){
-   let y=top+((bot-top)-lines.length*lh)/2+fs;
-   lines.forEach(l=>{let px=(W-l.w)/2;l.a.forEach(o=>{if(o.c==='G'&&hl){x.fillStyle=hl}else if(o.c==='G'){const gr=x.createLinearGradient(px,y-fs,px+o.mw,y);gr.addColorStop(0,$('accent').value);gr.addColorStop(1,$('accent2').value);x.fillStyle=gr}else x.fillStyle=$('tcol').value;x.textAlign='left';x.fillText(o.w,px,y);px+=o.mw+sp});y+=lh});
+   let y=top+((bot-top)-lines.length*lh2)/2+fs;
+   lines.forEach(l=>{let px=(W-l.w)/2;l.a.forEach(o=>{if(o.c==='G'&&hl){x.fillStyle=hl}else if(o.c==='G'){const gr=x.createLinearGradient(px,y-fs,px+o.mw,y);gr.addColorStop(0,$('accent').value);gr.addColorStop(1,$('accent2').value);x.fillStyle=gr}else x.fillStyle=$('tcol').value;x.textAlign='left';x.fillText(o.w,px,y);px+=o.mw+sp});y+=lh2});
    break;}}
  x.shadowColor='transparent';x.shadowBlur=0;x.shadowOffsetY=0}
 const cache=new WeakMap();
@@ -522,6 +523,13 @@ function drawGrid(hh){
  for(let j=0;j<3;j++)for(let i=0;i<cols;i++){if(!(i<3||i>=cols-3))continue;const h=((i*73856093)^(j*19349663))>>>0,r=h%100;if(r>=26)continue;const f=1-j*.38;
   x.fillStyle=r<8?hexA($('accent2').value,.13*f):`rgba(255,255,255,${.055*f})`;x.fillRect(i*c,j*c,c,c)}
  softGrid(x,0,Math.round(hh*.7),.2,'255,255,255','down')}
+function blocks(y0,y1,seed,k,col,mode){const c=105,cols=Math.ceil(W/c);
+ for(let j=Math.floor(y0/c);j<Math.ceil(y1/c);j++)for(let i=0;i<cols;i++){if(!(i<3||i>=cols-3))continue;const h=((i*73856093)^((j+seed)*19349663))>>>0,r=h%100;if(r>=30)continue;
+  const t=Math.max(0,Math.min(1,(j*c-y0)/(y1-y0))),f=mode==='up'?.25+.75*t:1-t*.9;
+  x.fillStyle=r<9?hexA($('accent2').value,.17*k*f):`rgba(${col},${.075*k*f})`;x.fillRect(i*c,j*c,c,c)}}
+function decorBottom(y0,y1,k,col){x.save();x.beginPath();x.rect(0,y0,W,y1-y0);x.clip();blocks(y0,y1,7,k,col,'up');x.restore();softGrid(x,y0,y1,.2*k,col,'up')}
+function topLight(h,k){const a2=$('accent2').value;let l=x.createLinearGradient(0,0,0,h*.7);l.addColorStop(0,hexA(a2,.32*k));l.addColorStop(1,hexA(a2,0));x.fillStyle=l;x.fillRect(0,0,W,h);const r=x.createRadialGradient(W/2,-60,0,W/2,-60,720);r.addColorStop(0,hexA(a2,.36*k));r.addColorStop(1,hexA(a2,0));x.fillStyle=r;x.fillRect(0,0,W,h)}
+function decorTop(h,k,col){x.save();x.beginPath();x.rect(0,0,W,h);x.clip();topLight(h,k);const gl=x.createRadialGradient(W*.85,40,0,W*.85,40,600);gl.addColorStop(0,hexA($('accent2').value,.22*k));gl.addColorStop(1,hexA($('accent2').value,0));x.fillStyle=gl;x.fillRect(0,0,W,h);blocks(0,h,0,k,col||'255,255,255','down');x.restore();softGrid(x,0,h,.22*k,col||'255,255,255','down')}
 function lightBg(h){const n=parseInt(h.slice(1),16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))>150}
 function softGrid(c,y0,y1,a,col,mode){
  c.save();c.beginPath();c.rect(0,y0,W,y1-y0);c.clip();c.lineWidth=1.2;const cell=105,reach=W*.4;
@@ -585,7 +593,7 @@ function renderStatic(){
    x=ox;
    let g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,hexA($('bgc').value,.9));g.addColorStop(1,hexA($('bgc').value,0));x.fillStyle=g;x.fillRect(0,0,W,300);
    g=x.createLinearGradient(0,560,0,1235);g.addColorStop(0,hexA($('bgc').value,0));g.addColorStop(.55,hexA($('bgc').value,.88));g.addColorStop(1,hexA($('bgc').value,.98));x.fillStyle=g;x.fillRect(0,560,W,675);
-   softGrid(x,0,300,.08,'255,255,255','down');softGrid(x,760,1235,.07,'255,255,255','up');
+   softGrid(x,0,300,.08,'255,255,255','down');decorBottom(560,1235,1,'255,255,255');
    drawLogo(85,115,false,'#fff');
    bar(W/2,800,130,7);
    headline(830,1150,W-130,74,true,null);
@@ -598,7 +606,7 @@ function renderStatic(){
    let g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,'rgba(0,0,0,.6)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,300);
    drawLogo(85,115,false,'#fff');
    x.fillStyle=pg();x.beginPath();x.moveTo(0,830);x.lineTo(W,640);x.lineTo(W,1235);x.lineTo(0,1235);x.closePath();x.fill();
-   x.save();x.clip();softGrid(x,600,1235,.07,'255,255,255','none');x.restore();
+   x.save();x.clip();blocks(640,1235,3,1,'255,255,255','up');softGrid(x,600,1235,.2,'255,255,255','none');x.restore();
    g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,$('accent').value);g.addColorStop(1,$('accent2').value);
    x.strokeStyle=g;x.lineWidth=12;x.beginPath();x.moveTo(0,830);x.lineTo(W,640);x.stroke();
    x.globalAlpha=.4;x.lineWidth=4;x.beginPath();x.moveTo(0,862);x.lineTo(W,672);x.stroke();x.globalAlpha=1;
@@ -611,7 +619,7 @@ function renderStatic(){
    x=ox;
    let g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,'rgba(0,0,0,.65)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,300);
    g=x.createLinearGradient(0,640,0,1235);g.addColorStop(0,hexA($('bgc').value,0));g.addColorStop(1,hexA($('bgc').value,.95));x.fillStyle=g;x.fillRect(0,640,W,595);
-   softGrid(x,0,300,.08,'255,255,255','down');softGrid(x,760,1235,.07,'255,255,255','up');
+   softGrid(x,0,300,.08,'255,255,255','down');decorBottom(560,1235,1,'255,255,255');
    drawLogo(85,115,false,'#fff');
    g=x.createLinearGradient(50,0,1030,0);g.addColorStop(0,$('accent').value);g.addColorStop(1,$('accent2').value);
    x.shadowColor='rgba(0,0,0,.45)';x.shadowBlur=30;x.shadowOffsetY=10;x.fillStyle=g;x.beginPath();x.roundRect?x.roundRect(50,830,980,320,34):x.rect(50,830,980,320);x.fill();
@@ -622,7 +630,7 @@ function renderStatic(){
    x.fillStyle=$('bgc').value;x.fillRect(0,0,W,H);drawFooter();
    x=ox;
    let g=x.createLinearGradient(0,0,0,280);g.addColorStop(0,'rgba(0,0,0,.6)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,280);
-   softGrid(sx,0,1235,.06,lightBg($('bgc').value)?'0,0,0':'255,255,255','none');softGrid(x,0,280,.08,'255,255,255','down');
+   softGrid(sx,0,1235,.06,lightBg($('bgc').value)?'0,0,0':'255,255,255','none');softGrid(x,0,280,.08,'255,255,255','down');decorBottom(620,1235,.9,lightBg($('bgc').value)?'0,0,0':'255,255,255');
    drawLogo(85,115,chip,'#fff');
    x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=32;x.shadowOffsetY=12;x.fillStyle=$('bgc2').value;x.beginPath();x.roundRect?x.roundRect(50,715,980,485,38):x.rect(50,715,980,485);x.fill();
    x.shadowColor='transparent';x.shadowBlur=0;x.shadowOffsetY=0;
@@ -631,7 +639,7 @@ function renderStatic(){
    x.globalAlpha=.65;x.font='500 26px '+FF();x.fillStyle=tc;x.textAlign='center';x.fillText($('date').value,W/2,1170);x.globalAlpha=1;
   }else{
    const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,$('bgc').value);g.addColorStop(1,$('bgc2').value);x.fillStyle=g;x.fillRect(0,0,W,H);
-   softGrid(x,0,H,.06,lightBg($('bgc').value)?'0,0,0':'255,255,255','none');
+   {const lt=lightBg($('bgc').value),cl=lt?'0,0,0':'255,255,255';softGrid(x,0,H,.06,cl,'none');decorBottom(640,1235,lt?.7:1,cl)}
    drawLogo(75,100,chip,tc);
    bar(W/2,818,130,7);
    headline(845,1150,W-140,70,false,null);
@@ -776,6 +784,8 @@ $('tl').onclick=e=>{if(!vid)return;const r=$('tl').getBoundingClientRect();vid.p
 function todayStr(){const d=new Date();return String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-US',{month:'long'})+' '+d.getFullYear()}
 function syncDate(){const on=$('adate').checked;if(on)$('date').value=todayStr();$('date').readOnly=on;dirty=true}
 $('adate').onchange=syncDate;syncDate();setInterval(()=>{if($('adate').checked&&$('date').value!==todayStr()){$('date').value=todayStr();dirty=true}},60000);
+const lhStep=d=>{const r=$('lhs');r.value=Math.max(.9,Math.min(1.8,+r.value+d)).toFixed(2);dirty=true};
+$('lhm').onclick=()=>lhStep(-.05);$('lhp').onclick=()=>lhStep(.05);
 const dock=$('dock');let curTab='';
 function openTab(t){const same=curTab===t&&!dock.classList.contains('min');dock.classList.toggle('min',same);curTab=t;
  document.querySelectorAll('.dt').forEach(b=>b.classList.toggle('on',!same&&b.dataset.t===t));
